@@ -1,21 +1,26 @@
+# main.py
+from app.errors import (NotVaccinatedError,
+                        OutdatedVaccineError,
+                        NotWearingMaskError)
 from app.cafe import Cafe
-from app.errors import VaccineError, NotWearingMaskError
 
 
-def go_to_cafe(friends: list[dict], cafe: Cafe) -> str:
-    try:
-        for friend in friends:
-            try:
-                cafe.visit_cafe(friend)
-            except NotWearingMaskError:
-                # We except for calculate and repeat
-                continue
-        # If all vaccinated - check the mask
-        masks_to_buy = sum(
-            1 for friend in friends if not friend.get("wearing_a_mask", False)
-        )
-        if masks_to_buy > 0:
-            return f"Friends should buy {masks_to_buy} masks"
-        return f"Friends can go to {cafe.name}"
-    except VaccineError:
-        return "All friends should be vaccinated"
+def go_to_cafe(friends: list, cafe: Cafe) -> str:
+    masks_to_buy = 0
+
+    for friend in friends:
+        # Спочатку перевіряємо вакцинацію
+        try:
+            # Перевіряється і вакцина, і маска одночасно
+            cafe.visit_cafe(friend)
+        except NotVaccinatedError:
+            return "All friends should be vaccinated"
+        except OutdatedVaccineError:
+            return "All friends should be vaccinated"
+        except NotWearingMaskError:
+            masks_to_buy += 1  # Якщо не носить маску, додаємо до кількості
+
+    if masks_to_buy > 0:
+        return f"Friends should buy {masks_to_buy} masks"
+
+    return f"Friends can go to {cafe.name}"
